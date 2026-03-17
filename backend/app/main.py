@@ -43,6 +43,11 @@ app.include_router(transcripts.router)
 app.include_router(pins.router)
 
 
+@app.get("/")
+async def root():
+    return {"status": "ok", "service": "noctem-backend"}
+
+
 @app.get("/health")
 async def health():
     return {"status": "ok", "service": "noctem-backend"}

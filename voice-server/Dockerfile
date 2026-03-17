@@ -3,9 +3,16 @@ FROM python:3.12-slim
 WORKDIR /app
 
 COPY pyproject.toml .
-RUN pip install uv && uv pip install --system -r pyproject.toml
+RUN pip install --no-cache-dir -U pip \
+    && pip install --no-cache-dir uv \
+    && uv pip install --system \
+        "fastapi>=0.115.0" \
+        "uvicorn[standard]>=0.32.0" \
+        "websockets>=14.0" \
+        "httpx>=0.28.0" \
+        "python-dotenv>=1.0.0"
 
 COPY . .
 
 EXPOSE 5050
-CMD ["uvicorn", "server:app", "--host", "0.0.0.0", "--port", "5050"]
+CMD ["sh", "-c", "uvicorn server:app --host 0.0.0.0 --port ${PORT:-5050}"]
