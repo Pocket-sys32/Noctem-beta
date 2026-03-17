@@ -15,4 +15,4 @@ RUN pip install --no-cache-dir -U pip \
 COPY . .
 
 EXPOSE 5050
-CMD ["sh", "-c", "uvicorn server:app --host 0.0.0.0 --port ${PORT:-5050}"]
+CMD ["python", "start.py"]
