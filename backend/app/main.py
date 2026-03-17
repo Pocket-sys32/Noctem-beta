@@ -1,6 +1,3 @@
-import os
-print("SUPABASE_URL in env (startup):", os.environ.get("SUPABASE_URL"))
-
 """Noctem Virtual Dispatcher — FastAPI entrypoint."""
 
 from __future__ import annotations
