@@ -1,4 +1,34 @@
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+const DEFAULT_BACKEND_URL = "http://localhost:8000";
+const INLINED_BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "";
+
+let _runtimeBackendUrl: string | null = null;
+
+async function getBackendUrl(): Promise<string> {
+  if (_runtimeBackendUrl) return _runtimeBackendUrl;
+
+  // If the env var was inlined at build-time, use it.
+  if (INLINED_BACKEND_URL) {
+    _runtimeBackendUrl = INLINED_BACKEND_URL;
+    return _runtimeBackendUrl;
+  }
+
+  // If we're in production and the env wasn't inlined, fetch runtime config from Next.js.
+  if (typeof window !== "undefined" && window.location.hostname !== "localhost") {
+    try {
+      const res = await fetch("/api/config", { cache: "no-store" });
+      const data = (await res.json()) as { backendUrl?: string };
+      if (data.backendUrl) {
+        _runtimeBackendUrl = data.backendUrl;
+        return _runtimeBackendUrl;
+      }
+    } catch {
+      // fall back below
+    }
+  }
+
+  _runtimeBackendUrl = DEFAULT_BACKEND_URL;
+  return _runtimeBackendUrl;
+}
 
 async function getAuthHeader(): Promise<Record<string, string>> {
   const { createClient } = await import("./supabase");
@@ -16,7 +46,8 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
     ...(await getAuthHeader()),
     ...init?.headers,
   };
-  const res = await fetch(`${BACKEND_URL}${path}`, { ...init, headers });
+  const backendUrl = await getBackendUrl();
+  const res = await fetch(`${backendUrl}${path}`, { ...init, headers });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     throw new Error(body.detail || `API error ${res.status}`);
